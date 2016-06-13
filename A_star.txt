@@ -24,21 +24,21 @@ hScore(krakow, 0).
 goal(krakow).
 
 start_A_star(InitState, PathCost, N, MaxStepLimit):-
-    score(InitState, 0, 0, InitCost, InitScore),
-    search_A_star([node(InitState, nil, nil, InitCost , InitScore )], [], PathCost, N, 1, MaxStepLimit).
+	score(InitState, 0, 0, InitCost, InitScore),
+	search_A_star([node(InitState, nil, nil, InitCost , InitScore )], [], PathCost, N, 1, MaxStepLimit).
 
 search_A_star(Queue, ClosedSet, PathCost, N, StepCounter, MaxStepLimit):-
 	StepCounter < MaxStepLimit, ! ,
 	write("Numer kroku: "),
-    write(StepCounter), nl,
+	write(StepCounter), nl,
 	fetch_new(Node, Queue, ClosedSet, RestQueue, N),
 	NewStepCounter is StepCounter + 1,
 	continue(Node, RestQueue, ClosedSet, PathCost, N, NewStepCounter, MaxStepLimit).
 
 search_A_star(Queue, ClosedSet, PathCost, N, StepCounter, MaxStepLimit):-
 	write("Numer kroku: "),
-    write(StepCounter), nl,
-    output_nodes(Queue, N, ClosedSet),
+	write(StepCounter), nl,
+	output_nodes(Queue, N, ClosedSet),
 	write('Przekroczono limit krok—w. Zwi«kszy limit? (t/n)'), nl,
 	read('t'),
 	NewLimit is MaxStepLimit + 1,
@@ -47,13 +47,13 @@ search_A_star(Queue, ClosedSet, PathCost, N, StepCounter, MaxStepLimit):-
 	continue(Node, RestQueue, ClosedSet, PathCost, N, NewStepCounter, NewLimit).
 
 continue(node(State, Action, Parent, Cost, _), _, ClosedSet, path_cost(Path, Cost), _, _, _):-
-   	goal(State),!,
-  	build_path(node(Parent, _, _, _, _), ClosedSet, [Action/State], Path).
+	goal(State),!,
+	build_path(node(Parent, _, _, _, _), ClosedSet, [Action/State], Path).
 
 continue(Node, RestQueue, ClosedSet, Path, N, StepCounter, MaxStepLimit):-
 	expand(Node, NewNodes),
-    insert_new_nodes(NewNodes, RestQueue, NewQueue),
-    search_A_star(NewQueue, [Node| ClosedSet], Path, N, StepCounter, MaxStepLimit).
+	insert_new_nodes(NewNodes, RestQueue, NewQueue),
+	search_A_star(NewQueue, [Node| ClosedSet], Path, N, StepCounter, MaxStepLimit).
 
 fetch(node(State, Action,Parent, Cost, Score), [node(State, Action,Parent, Cost, Score) |RestQueue], ClosedSet, RestQueue, _):-
 	\+ member(node(State, _ ,_  , _ , _ ) , ClosedSet), ! .
@@ -67,12 +67,12 @@ output_nodes([], _, _).
 
 output_nodes([X|R], N, ClosedSet):-
 	member(X, ClosedSet), ! ,
-   	output_nodes(R, N, ClosedSet).
+	output_nodes(R, N, ClosedSet).
 
 output_nodes([X|R], N, ClosedSet):-
-   	write(X), nl,
-   	NewN is N - 1,
-   	output_nodes(R, NewN, ClosedSet).
+	write(X), nl,
+	NewN is N - 1,
+	output_nodes(R, NewN, ClosedSet).
 
 input_decisions(0, []):- ! .
 
@@ -83,7 +83,7 @@ input_decisions(N, [D|RestDecisions]):-
 
 get_user_decisions(Queue, N, ClosedSet, Decisions):-
 	output_nodes(Queue, N, ClosedSet),
-   	write('Wybierz indeksy: '), nl,
+	write('Wybierz indeksy: '), nl,
 	input_decisions(N, Decisions).
 
 get_index_nondeterministic(X, [X|_]).
@@ -92,20 +92,20 @@ get_index_nondeterministic(X, [_|R]):-
 	get_index_nondeterministic(X, R).
 
 get_element_at_index(1, X, [X|R], ClosedSet, R):-
-    \+ member(X, ClosedSet), ! .
+	\+ member(X, ClosedSet), ! .
 
 get_element_at_index(Index, Node, [X|R], ClosedSet,[X|RestQueue]):-
-    \+ member(X, ClosedSet), ! ,
-    NewIndex is Index - 1,
-    get_element_at_index(NewIndex, Node, R, ClosedSet, RestQueue).
+	\+ member(X, ClosedSet), ! ,
+	NewIndex is Index - 1,
+	get_element_at_index(NewIndex, Node, R, ClosedSet, RestQueue).
 
 get_element_at_index(Index, Node, [X|R], ClosedSet, [X|RestQueue]):-
-    get_element_at_index(Index, Node, R, ClosedSet, RestQueue).
+	get_element_at_index(Index, Node, R, ClosedSet, RestQueue).
 
 fetch_new(Node, Queue, ClosedSet, RestQueue, N):-
-    get_user_decisions(Queue, N, ClosedSet, Decisions),
-    get_index_nondeterministic(Index, Decisions),
-    get_element_at_index(Index, Node, Queue, ClosedSet, RestQueue).
+	get_user_decisions(Queue, N, ClosedSet, Decisions),
+	get_index_nondeterministic(Index, Decisions),
+	get_element_at_index(Index, Node, Queue, ClosedSet, RestQueue).
 
 expand(node(State, _ ,_ , Cost, _ ), NewNodes):-
 	findall(node(ChildState, Action, State, NewCost, ChildScore),
@@ -132,7 +132,6 @@ insert_p_queue(node(State, Action, Parent, Cost, FScore),
 	FScore >= FScore1, ! ,
 	insert_p_queue(node(State, Action, Parent, Cost, FScore), RestQueue, Rest1).
 
-
 insert_p_queue(node(State, Action, Parent, Cost, FScore), Queue, [node(State, Action, Parent, Cost, FScore)|Queue]).
 
 build_path(node(nil, _, _, _, _ ), _, Path, Path):- ! .
@@ -142,6 +141,7 @@ build_path(node(EndState, _ , _ , _, _ ), Nodes, PartialPath, Path):-
 	build_path(node(Parent,_ ,_ , _ , _ ) , Nodes1, [Action/EndState|PartialPath],Path).
 
 del([X|R],X,R).
+
 del([Y|R],X,[Y|R1]):-
 	X\=Y,
 	del(R,X,R1).
