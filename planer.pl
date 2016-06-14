@@ -49,7 +49,7 @@ remove_old_field_or_block(b(X),NewFields,NewBlocks,NewFields,NewBlocks2):-
 hScore_sum_occurences([], _, 0).
 
 hScore_sum_occurences([FirstElement|RestElements], Array, Result):-
-	member(FirstElement, Array),!,
+	member(FirstElement, Array), ! ,
 	hScore_sum_occurences(RestElements, Array, PartialResult),
 	Result is PartialResult + 1.
 
@@ -60,7 +60,7 @@ hScore(state(Connections, FreeFields, FreeBlocks), Score):-
 	hScore_sum_occurences(Connections, [b(4)/p(1), b(3)/b(1), b(1)/p(3), b(2)/b(5), b(5)/p(4)], PartialScore1),
 	hScore_sum_occurences(FreeFields, [p(2)], PartialScore2),
 	hScore_sum_occurences(FreeBlocks, [b(4), b(3), b(2)], PartialScore3),
-	Score is -PartialScore1 + -PartialScore2 + -PartialScore3.
+	Score is PartialScore1 + PartialScore2 + PartialScore3.
 
 final_state( state([b(4)/p(1), b(3)/b(1), b(1)/p(3), b(2)/b(5), b(5)/p(4)], 
                    [p(2)], 
@@ -189,7 +189,8 @@ expand(node(State, _ ,_ , Cost, _ ), NewNodes):-
 score(State, ParentCost, StepCost, Cost, FScore):-
 	Cost is ParentCost + StepCost,
 	hScore(State, HScore),
-	FScore is Cost + HScore.
+	FScore is Cost - HScore.
+%	FScore is Cost + HScore.
 
 insert_new_nodes( [ ], Queue, Queue) .
 
