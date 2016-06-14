@@ -1,46 +1,100 @@
+%Wywo≈Çanie
+%start_A_star(state([b(4)/b(3), b(3)/b(1), b(1)/p(3), b(2)/b(5), b(5)/p(4)], [p(2),p(1)], [b(4), b(2)]),PathCost,3,20).
 
+successor(state(Connections, FreeFields, FreeBlocks), przenies(Block,FoundPlace), 1, 
+          state([Block/FoundPlace|NewConnections],NewFields2,NewBlocks2)) :-
+	find_moves(state(Connections, FreeFields, FreeBlocks), Block,FoundPlace,FreeBlocks),
+	delete_from_connections(Connections,Block,ToUpdatePlace,NewConnections),
+	update_free_fields_and_blocks(ToUpdatePlace,FreeFields,FreeBlocks,NewFields,NewBlocks),
+	delete_from_free_fields_or_blocks(FoundPlace,NewFields,NewBlocks,NewFields2,NewBlocks2).
+ 
+find_moves(state(_,Fields,Blocks),X, FoundPlace,[X|_]):-
+	delete(Blocks,X,NewBlocks),
+	find_moves_for_one_block(Fields,NewBlocks,FoundPlace).
+ 
+find_moves(state(Connections,Fields,Blocks),Block, FoundPlace,[_|RestBlocks]):-
+	find_moves(state(Connections,Fields,Blocks),Block,FoundPlace,RestBlocks).
 
-succ()…
+find_moves_for_one_block(_,Blocks,FoundPlace):-
+	find_permutation(Blocks,FoundPlace).
+ 
+find_moves_for_one_block(Fields,_,FoundPlace):-
+	find_permutation(Fields,FoundPlace).
+ 
+find_permutation([X|_],X).
 
-hScore()…
+find_permutation([_|R],X):-
+	find_permutation(R,X).
+ 
+delete_from_free_fields_or_blocks(p(X),NewFields,NewBlocks,NewFields2,NewBlocks):-
+	del(NewFields,p(X),NewFields2).
+ 
+delete_from_free_fields_or_blocks(b(X),NewFields,NewBlocks,NewFields,NewBlocks2):-
+	del(NewBlocks,b(X),NewBlocks2).
 
+delete_from_connections([],_,nil,[]) :- ! .
 
+delete_from_connections([BlockAbove/BlockBelow|RestConnections],BlockAbove,BlockBelow,RestConnections) :- ! .
+ 
+delete_from_connections([FirstBlockAbove/FirstBlockBelow|RestConnections],BlockAbove,
+                        BlockBelow,[FirstBlockAbove/FirstBlockBelow|R2]):-
+	delete_from_connections(RestConnections,BlockAbove,BlockBelow,R2).
+ 
+update_free_fields_and_blocks(nil,Fields,Blocks,Fields,Blocks).
+ 
+update_free_fields_and_blocks(p(X),RestFields,Blocks,[p(X)|RestFields],Blocks).
+ 
+update_free_fields_and_blocks(b(X),RestFields,Blocks,RestFields,[b(X)|Blocks]).
 
+hScore_sum_occurences([], _, 0).
+
+hScore_sum_occurences([FirstElement|RestElements], Array, Result):-
+	member(FirstElement, Array),!,
+	hScore_sum_occurences(RestElements, Array, PartialResult),
+	Result is PartialResult + 1.
+
+hScore_sum_occurences([_|RestElements], Array, Result):-
+	hScore_sum_occurences(RestElements, Array, Result).
+
+hScore(state(Connections, FreeFields, FreeBlocks), Score):-
+	hScore_sum_occurences(Connections, [b(4)/p(1), b(3)/b(1), b(1)/p(3), b(2)/b(5), b(5)/p(4)], PartialScore1),
+	hScore_sum_occurences(FreeFields, [p(2)], PartialScore2),
+	hScore_sum_occurences(FreeBlocks, [b(4), b(3), b(2)], PartialScore3),
+	Score is -PartialScore1 + -PartialScore2 + -PartialScore3.
 
 final_state( state([b(4)/p(1), b(3)/b(1), b(1)/p(3), b(2)/b(5), b(5)/p(4)], 
                    [p(2)], 
                    [b(4), b(3), b(2)]) ).
 
 goal(State) :-
-    final_state(FinalState),
-    equal_lengths(State, FinalState),
-    equal_states(State, FinalState).
+	final_state(FinalState),
+	equal_lengths(State, FinalState),
+	equal_states(State, FinalState).
    
 equal_lengths(state(Connections1, FreeFields1, FreeBlocks1), 
               state(Connections2, FreeFields2, FreeBlocks2)) :-
-    equal_length(Connections1, Connections2),
-    equal_length(FreeFields1, FreeFields2),
-    equal_length(FreeBlocks1, FreeBlocks2).
+	equal_length(Connections1, Connections2),
+	equal_length(FreeFields1, FreeFields2),
+	equal_length(FreeBlocks1, FreeBlocks2).
 
 equal_length([], []).
 
 equal_length([_|Rest1], [_|Rest2]) :-
-    equal_length(Rest1, Rest2).
+	equal_length(Rest1, Rest2).
 
 equal_states(state(Connections1, FreeFields1, FreeBlocks1), 
               state(Connections2, FreeFields2, FreeBlocks2)) :-
-    equal_lists(Connections1, Connections2),
-    equal_lists(FreeFields1, FreeFields2),
-    equal_lists(FreeBlocks1, FreeBlocks2).
+	equal_lists(Connections1, Connections2),
+	equal_lists(FreeFields1, FreeFields2),
+	equal_lists(FreeBlocks1, FreeBlocks2).
 
 equal_lists(_, []).
 
 equal_lists([Elem|Rest], List) :-
-    member(Elem, List),
-    del(List, Elem, NewList),
-    equal_lists(Rest, NewList).
+	member(Elem, List),
+	del(List, Elem, NewList),
+	equal_lists(Rest, NewList).
 
-% ——————————————————————————%
 
 start_A_star(InitState, PathCost, N, MaxStepLimit):-
 	score(InitState, 0, 0, InitCost, InitScore),
@@ -50,7 +104,7 @@ search_A_star(Queue, ClosedSet, PathCost, N, StepCounter, MaxStepLimit):-
 	StepCounter < MaxStepLimit, ! ,
 	write("Numer kroku: "),
 	write(StepCounter), nl,
-	fetch_new(Node, Queue, ClosedSet, RestQueue, N),
+	fetch(Node, Queue, ClosedSet, RestQueue, N),
 	NewStepCounter is StepCounter + 1,
 	continue(Node, RestQueue, ClosedSet, PathCost, N, NewStepCounter, MaxStepLimit).
 
@@ -58,10 +112,10 @@ search_A_star(Queue, ClosedSet, PathCost, N, StepCounter, MaxStepLimit):-
 	write("Numer kroku: "),
 	write(StepCounter), nl,
 	output_nodes(Queue, N, ClosedSet),
-	write('Przekroczono limit kroków. Zwi´kszyç limit? (t/n)'), nl,
+	write('Przekroczono limit krok√≥w. Zwiƒôkszyƒá¬ç limit? (t/n)'), nl,
 	read('t'),
 	NewLimit is MaxStepLimit + 1,
-	fetch_new(Node, Queue, ClosedSet, RestQueue, N),
+	fetch(Node, Queue, ClosedSet, RestQueue, N),
 	NewStepCounter is StepCounter + 1,
 	continue(Node, RestQueue, ClosedSet, PathCost, N, NewStepCounter, NewLimit).
 
@@ -128,8 +182,8 @@ fetch_new(Node, Queue, ClosedSet, RestQueue, N):-
 
 expand(node(State, _ ,_ , Cost, _ ), NewNodes):-
 	findall(node(ChildState, Action, State, NewCost, ChildScore),
-			(succ(State, Action, StepCost, ChildState), score(ChildState, Cost, StepCost, NewCost, ChildScore)),
-%			(successor(State, Action, StepCost, ChildState), score(ChildState, Cost, StepCost, NewCost, ChildScore)),
+%			(succ(State, Action, StepCost, ChildState), score(ChildState, Cost, StepCost, NewCost, ChildScore)),
+			(successor(State, Action, StepCost, ChildState), score(ChildState, Cost, StepCost, NewCost, ChildScore)),
 			NewNodes), ! .
 
 score(State, ParentCost, StepCost, Cost, FScore):-
