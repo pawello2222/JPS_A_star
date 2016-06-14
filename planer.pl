@@ -1,50 +1,50 @@
 %Wywołanie
 %start_A_star(state([b(4)/b(3), b(3)/b(1), b(1)/p(3), b(2)/b(5), b(5)/p(4)], [p(2),p(1)], [b(4), b(2)]),PathCost,3,20).
 
-successor(state(Connections, FreeFields, FreeBlocks), przenies(Block,FoundPlace), 1, 
-          state([Block/FoundPlace|NewConnections],NewFields2,NewBlocks2)) :-
-	find_moves(state(Connections, FreeFields, FreeBlocks), Block,FoundPlace,FreeBlocks),
-	delete_from_connections(Connections,Block,ToUpdatePlace,NewConnections),
-	update_free_fields_and_blocks(ToUpdatePlace,FreeFields,FreeBlocks,NewFields,NewBlocks),
-	delete_from_free_fields_or_blocks(FoundPlace,NewFields,NewBlocks,NewFields2,NewBlocks2).
- 
-find_moves(state(_,Fields,Blocks),X, FoundPlace,[X|_]):-
-	delete(Blocks,X,NewBlocks),
-	find_moves_for_one_block(Fields,NewBlocks,FoundPlace).
- 
-find_moves(state(Connections,Fields,Blocks),Block, FoundPlace,[_|RestBlocks]):-
-	find_moves(state(Connections,Fields,Blocks),Block,FoundPlace,RestBlocks).
+successor(state(Connections, FreeFields, FreeBlocks), move(Block,NewPlace), 1, 
+          state([Block/NewPlace|NewConnections],NewFields2,NewBlocks2)) :-
+	find_moves(state(Connections, FreeFields, FreeBlocks), Block, NewPlace, FreeBlocks),
+	update_connections(Connections, Block, OldPlace, NewConnections),
+	add_new_field_or_block(OldPlace, FreeFields, FreeBlocks, NewFields, NewBlocks),
+	remove_old_field_or_block(NewPlace, NewFields, NewBlocks, NewFields2, NewBlocks2).
 
-find_moves_for_one_block(_,Blocks,FoundPlace):-
-	find_permutation(Blocks,FoundPlace).
- 
-find_moves_for_one_block(Fields,_,FoundPlace):-
-	find_permutation(Fields,FoundPlace).
- 
-find_permutation([X|_],X).
+find_moves(state(_, Fields, Blocks), X, NewPlace, [X|_]) :-
+	delete(Blocks, X, NewBlocks),
+	find_moves_for_one_block(Fields, NewBlocks, NewPlace).
 
-find_permutation([_|R],X):-
-	find_permutation(R,X).
- 
-delete_from_free_fields_or_blocks(p(X),NewFields,NewBlocks,NewFields2,NewBlocks):-
-	del(NewFields,p(X),NewFields2).
- 
-delete_from_free_fields_or_blocks(b(X),NewFields,NewBlocks,NewFields,NewBlocks2):-
-	del(NewBlocks,b(X),NewBlocks2).
+find_moves(state(Connections, Fields, Blocks), Block, NewPlace, [_|RestBlocks]) :-
+	find_moves(state(Connections, Fields, Blocks), Block, NewPlace, RestBlocks).
 
-delete_from_connections([],_,nil,[]) :- ! .
+find_moves_for_one_block(_, Blocks, NewPlace) :-
+	find_permutation(Blocks, NewPlace).
 
-delete_from_connections([BlockAbove/BlockBelow|RestConnections],BlockAbove,BlockBelow,RestConnections) :- ! .
+find_moves_for_one_block(Fields, _, NewPlace) :-
+	find_permutation(Fields, NewPlace).
+
+find_permutation([X|_], X).
+
+find_permutation([_|R], X) :-
+	find_permutation(R, X).
+
+update_connections([], _, nil, []) :- ! .
+
+update_connections([BlockAbove/BlockBelow|RestConnections], BlockAbove, BlockBelow, RestConnections) :- ! .
  
-delete_from_connections([FirstBlockAbove/FirstBlockBelow|RestConnections],BlockAbove,
-                        BlockBelow,[FirstBlockAbove/FirstBlockBelow|R2]):-
-	delete_from_connections(RestConnections,BlockAbove,BlockBelow,R2).
+update_connections([FirstBlockAbove/FirstBlockBelow|RestConnections], BlockAbove, 
+                   BlockBelow, [FirstBlockAbove/FirstBlockBelow|R2]) :-
+	update_connections(RestConnections, BlockAbove, BlockBelow, R2).
+
+add_new_field_or_block(nil, Fields, Blocks, Fields, Blocks).
  
-update_free_fields_and_blocks(nil,Fields,Blocks,Fields,Blocks).
+add_new_field_or_block(p(X), RestFields, Blocks, [p(X)|RestFields], Blocks).
  
-update_free_fields_and_blocks(p(X),RestFields,Blocks,[p(X)|RestFields],Blocks).
+add_new_field_or_block(b(X), RestFields, Blocks, RestFields, [b(X)|Blocks]).
+
+remove_old_field_or_block(p(X), NewFields, NewBlocks, NewFields2, NewBlocks) :-
+	del(NewFields, p(X), NewFields2).
  
-update_free_fields_and_blocks(b(X),RestFields,Blocks,RestFields,[b(X)|Blocks]).
+remove_old_field_or_block(b(X),NewFields,NewBlocks,NewFields,NewBlocks2):-
+	del(NewBlocks, b(X), NewBlocks2).
 
 hScore_sum_occurences([], _, 0).
 
@@ -112,7 +112,7 @@ search_A_star(Queue, ClosedSet, PathCost, N, StepCounter, MaxStepLimit):-
 	write("Numer kroku: "),
 	write(StepCounter), nl,
 	output_nodes(Queue, N, ClosedSet),
-	write('Przekroczono limit kroków. Zwiększyć limit? (t/n)'), nl,
+	write('Przekroczono limit krok—w. Zwi«kszy limit? (t/n)'), nl,
 	read('t'),
 	NewLimit is MaxStepLimit + 1,
 	fetch(Node, Queue, ClosedSet, RestQueue, N),
