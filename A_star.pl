@@ -1,3 +1,6 @@
+%Wywo¸anie
+%start_A_star(gdansk,PathCost,3,20).
+
 succ(gdansk, move, 170, olsztyn).
 succ(gdansk, move, 377, warszawa).
 succ(gdansk, move, 165, bydgoszcz).

@@ -1,3 +1,6 @@
+%Wywo¸anie
+%start_A_star([pos(0,3/2), pos(1,1/3), pos(2,2/3), pos(3,3/3), pos(4,1/2), pos(5,2/2), pos(6,3/1), pos(7,1/1), pos(8,2/1)],PathCost,3,20).
+
 successor([pos(0, EmptyPos)|TilePositions], move, 1, [pos(0, NewEmptyPos)|NewTilePositions]):-
 	find_neighbour(EmptyPos, TilePositions, NewEmptyPos, NewTilePositions).
 
