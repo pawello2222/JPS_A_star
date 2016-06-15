@@ -1,5 +1,4 @@
-%Wywo∏anie
-%start_A_star(gdansk,PathCost,3,20).
+%start_A_star(gdansk, PathCost, 3, 20).
 
 succ(gdansk, move, 170, olsztyn).
 succ(gdansk, move, 377, warszawa).
@@ -42,7 +41,7 @@ search_A_star(Queue, ClosedSet, PathCost, N, StepCounter, MaxStepLimit):-
 	write("Numer kroku: "),
 	write(StepCounter), nl,
 	output_nodes(Queue, N, ClosedSet, _),
-	write('Przekroczono limit kroków. Zwi´kszyç limit? (t/n)'), nl,
+	write('Przekroczono limit krokow. Zwiekszyc limit? (t/n)'), nl,
 	read('t'),
 	NewLimit is MaxStepLimit + 1,
 	fetch_new(Node, Queue, ClosedSet, RestQueue, N),

@@ -1,32 +1,29 @@
-%Wywołanie
-%start_A_star(state([b(4)/b(3), b(3)/b(1), b(1)/p(3), b(2)/b(5), b(5)/p(4)], [p(2),p(1)], [b(4), b(2)]),PathCost,3,20).
+%start_A_star(state([b(4)/b(3), b(3)/b(1), b(1)/p(3), b(2)/b(5), b(5)/p(4)], [p(2),p(1)], [b(4), b(2)]), PathCost, 3, 20).
 
-successor(state(Connections, FreeFields, FreeBlocks), move(Block,NewPlace), 1, 
-          state([Block/NewPlace|NewConnections],NewFields2,NewBlocks2)) :-
-	find_moves(state(Connections, FreeFields, FreeBlocks), Block, NewPlace, FreeBlocks),
+successor(state(Connections, FreeFields, FreeBlocks), move(Block, NewPlace), 1, 
+          state([Block/NewPlace|NewConnections], NewFields2, NewBlocks2)) :-
+	find_new_move(state(Connections, FreeFields, FreeBlocks), Block, NewPlace, FreeBlocks),
 	update_connections(Connections, Block, OldPlace, NewConnections),
 	add_new_field_or_block(OldPlace, FreeFields, FreeBlocks, NewFields, NewBlocks),
 	remove_old_field_or_block(NewPlace, NewFields, NewBlocks, NewFields2, NewBlocks2).
 
-find_moves(state(_, Fields, Blocks), X, NewPlace, [X|_]) :-
+find_new_move(state(_, Fields, Blocks), X, NewPlace, [X|_]) :-
 	delete(Blocks, X, NewBlocks),
-	find_moves_for_one_block(Fields, NewBlocks, NewPlace).
+	find_move_for_one_block(Fields, NewBlocks, NewPlace).
 
-find_moves(state(Connections, Fields, Blocks), Block, NewPlace, [_|RestBlocks]) :-
-	find_moves(state(Connections, Fields, Blocks), Block, NewPlace, RestBlocks).
+find_new_move(State, Block, NewPlace, [_|RestBlocks]) :-
+	find_new_move(State, Block, NewPlace, RestBlocks).
 
-find_moves_for_one_block(_, Blocks, NewPlace) :-
-	find_permutation(Blocks, NewPlace).
+find_move_for_one_block(_, Blocks, NewPlace) :-
+	get_new_position(Blocks, NewPlace).
 
-find_moves_for_one_block(Fields, _, NewPlace) :-
-	find_permutation(Fields, NewPlace).
+find_move_for_one_block(Fields, _, NewPlace) :-
+	get_new_position(Fields, NewPlace).
 
-find_permutation([X|_], X).
+get_new_position([X|_], X).
 
-find_permutation([_|R], X) :-
-	find_permutation(R, X).
-
-update_connections([], _, nil, []) :- ! .
+get_new_position([_|R], X) :-
+	get_new_position(R, X).
 
 update_connections([BlockAbove/BlockBelow|RestConnections], BlockAbove, BlockBelow, RestConnections) :- ! .
  
@@ -34,8 +31,6 @@ update_connections([FirstBlockAbove/FirstBlockBelow|RestConnections], BlockAbove
                    BlockBelow, [FirstBlockAbove/FirstBlockBelow|R2]) :-
 	update_connections(RestConnections, BlockAbove, BlockBelow, R2).
 
-add_new_field_or_block(nil, Fields, Blocks, Fields, Blocks).
- 
 add_new_field_or_block(p(X), RestFields, Blocks, [p(X)|RestFields], Blocks).
  
 add_new_field_or_block(b(X), RestFields, Blocks, RestFields, [b(X)|Blocks]).
@@ -104,18 +99,18 @@ search_A_star(Queue, ClosedSet, PathCost, N, StepCounter, MaxStepLimit):-
 	StepCounter < MaxStepLimit, ! ,
 	write("Numer kroku: "),
 	write(StepCounter), nl,
-	fetch(Node, Queue, ClosedSet, RestQueue, N),
+	fetch_new(Node, Queue, ClosedSet, RestQueue, N),
 	NewStepCounter is StepCounter + 1,
 	continue(Node, RestQueue, ClosedSet, PathCost, N, NewStepCounter, MaxStepLimit).
 
 search_A_star(Queue, ClosedSet, PathCost, N, StepCounter, MaxStepLimit):-
 	write("Numer kroku: "),
 	write(StepCounter), nl,
-	output_nodes(Queue, N, ClosedSet),
-	write('Przekroczono limit krok—w. Zwi«kszy limit? (t/n)'), nl,
+	output_nodes(Queue, N, ClosedSet, _),
+	write('Przekroczono limit krokow. Zwiekszyc limit? (t/n)'), nl,
 	read('t'),
 	NewLimit is MaxStepLimit + 1,
-	fetch(Node, Queue, ClosedSet, RestQueue, N),
+	fetch_new(Node, Queue, ClosedSet, RestQueue, N),
 	NewStepCounter is StepCounter + 1,
 	continue(Node, RestQueue, ClosedSet, PathCost, N, NewStepCounter, NewLimit).
 
@@ -134,18 +129,18 @@ fetch(node(State, Action,Parent, Cost, Score), [node(State, Action,Parent, Cost,
 fetch(Node, [ _ |RestQueue], ClosedSet, NewRest, N):-
 	fetch(Node, RestQueue, ClosedSet , NewRest, N).
 
-output_nodes(_, 0, _):- ! .
+output_nodes(_, 0, _, 0):- ! .
 
-output_nodes([], _, _).
+output_nodes([], N, _, N).
 
-output_nodes([X|R], N, ClosedSet):-
+output_nodes([X|R], N, ClosedSet, N2):-
 	member(X, ClosedSet), ! ,
-	output_nodes(R, N, ClosedSet).
+	output_nodes(R, N, ClosedSet, N2).
 
-output_nodes([X|R], N, ClosedSet):-
+output_nodes([X|R], N, ClosedSet, N2):-
 	write(X), nl,
 	NewN is N - 1,
-	output_nodes(R, NewN, ClosedSet).
+	output_nodes(R, NewN, ClosedSet, N2).
 
 input_decisions(0, []):- ! .
 
@@ -155,9 +150,10 @@ input_decisions(N, [D|RestDecisions]):-
 	input_decisions(NewN, RestDecisions).
 
 get_user_decisions(Queue, N, ClosedSet, Decisions):-
-	output_nodes(Queue, N, ClosedSet),
+	output_nodes(Queue, N, ClosedSet, Diff),
 	write('Wybierz indeksy: '), nl,
-	input_decisions(N, Decisions).
+	NewN is N - Diff,
+	input_decisions(NewN, Decisions).
 
 get_index_nondeterministic(X, [X|_]).
 

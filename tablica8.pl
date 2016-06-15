@@ -1,7 +1,6 @@
-%Wywo¸anie
-%start_A_star([pos(0,3/2), pos(1,1/3), pos(2,2/3), pos(3,3/3), pos(4,1/2), pos(5,2/2), pos(6,3/1), pos(7,1/1), pos(8,2/1)],PathCost,3,20).
+%start_A_star([pos(0,3/2), pos(1,1/3), pos(2,2/3), pos(3,3/3), pos(4,1/2), pos(5,2/2), pos(6,3/1), pos(7,1/1), pos(8,2/1)], PathCost, 3, 20).
 
-successor([pos(0, EmptyPos)|TilePositions], move, 1, [pos(0, NewEmptyPos)|NewTilePositions]):-
+successor([pos(0, EmptyPos)|TilePositions], move(EmptyPos, NewEmptyPos), 1, [pos(0, NewEmptyPos)|NewTilePositions]):-
 	find_neighbour(EmptyPos, TilePositions, NewEmptyPos, NewTilePositions).
 
 find_neighbour(EmptyPos, [pos(Neighb, NeighbPos)|RestPositions], 
@@ -25,18 +24,26 @@ abs(X, X):-
 abs(X, AbsX):-
 	AbsX is -X.
 
-finalPos(0, 3/1).
-finalPos(1, 1/3).
-finalPos(2, 2/3).
-finalPos(3, 3/3).
-finalPos(4, 1/2).
-finalPos(5, 2/2).
-finalPos(6, 3/2).
-finalPos(7, 1/1).
-finalPos(8, 2/1).
+goalPosition(0, 3/1).
+
+goalPosition(1, 1/3).
+
+goalPosition(2, 2/3).
+
+goalPosition(3, 3/3).
+
+goalPosition(4, 1/2).
+
+goalPosition(5, 2/2).
+
+goalPosition(6, 3/2).
+
+goalPosition(7, 1/1).
+
+goalPosition(8, 2/1).
 
 countScore(pos(Pos, X/Y), Result):-
-	finalPos(Pos, A/B),
+	goalPosition(Pos, A/B),
 	DiffX is A-X,
 	abs(DiffX, AbsDiffX),
 	DiffY is B-Y,
@@ -61,18 +68,18 @@ search_A_star(Queue, ClosedSet, PathCost, N, StepCounter, MaxStepLimit):-
 	StepCounter < MaxStepLimit, ! ,
 	write("Numer kroku: "),
 	write(StepCounter), nl,
-	fetch(Node, Queue, ClosedSet, RestQueue, N),
+	fetch_new(Node, Queue, ClosedSet, RestQueue, N),
 	NewStepCounter is StepCounter + 1,
 	continue(Node, RestQueue, ClosedSet, PathCost, N, NewStepCounter, MaxStepLimit).
 
 search_A_star(Queue, ClosedSet, PathCost, N, StepCounter, MaxStepLimit):-
 	write("Numer kroku: "),
 	write(StepCounter), nl,
-	output_nodes(Queue, N, ClosedSet),
-	write('Przekroczono limit krok—w. Zwi«kszy limit? (t/n)'), nl,
+	output_nodes(Queue, N, ClosedSet, _),
+	write('Przekroczono limit krokow. Zwiekszyc limit? (t/n)'), nl,
 	read('t'),
 	NewLimit is MaxStepLimit + 1,
-	fetch(Node, Queue, ClosedSet, RestQueue, N),
+	fetch_new(Node, Queue, ClosedSet, RestQueue, N),
 	NewStepCounter is StepCounter + 1,
 	continue(Node, RestQueue, ClosedSet, PathCost, N, NewStepCounter, NewLimit).
 
@@ -91,18 +98,18 @@ fetch(node(State, Action,Parent, Cost, Score), [node(State, Action,Parent, Cost,
 fetch(Node, [ _ |RestQueue], ClosedSet, NewRest, N):-
 	fetch(Node, RestQueue, ClosedSet , NewRest, N).
 
-output_nodes(_, 0, _):- ! .
+output_nodes(_, 0, _, 0):- ! .
 
-output_nodes([], _, _).
+output_nodes([], N, _, N).
 
-output_nodes([X|R], N, ClosedSet):-
+output_nodes([X|R], N, ClosedSet, N2):-
 	member(X, ClosedSet), ! ,
-	output_nodes(R, N, ClosedSet).
+	output_nodes(R, N, ClosedSet, N2).
 
-output_nodes([X|R], N, ClosedSet):-
+output_nodes([X|R], N, ClosedSet, N2):-
 	write(X), nl,
 	NewN is N - 1,
-	output_nodes(R, NewN, ClosedSet).
+	output_nodes(R, NewN, ClosedSet, N2).
 
 input_decisions(0, []):- ! .
 
@@ -112,9 +119,10 @@ input_decisions(N, [D|RestDecisions]):-
 	input_decisions(NewN, RestDecisions).
 
 get_user_decisions(Queue, N, ClosedSet, Decisions):-
-	output_nodes(Queue, N, ClosedSet),
+	output_nodes(Queue, N, ClosedSet, Diff),
 	write('Wybierz indeksy: '), nl,
-	input_decisions(N, Decisions).
+	NewN is N - Diff,
+	input_decisions(NewN, Decisions).
 
 get_index_nondeterministic(X, [X|_]).
 
